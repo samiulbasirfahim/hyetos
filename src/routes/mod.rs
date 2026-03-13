@@ -1,9 +1,13 @@
 mod health;
+mod google;
+mod webhooks;
 use actix_web::{HttpResponse, web};
 
 pub fn register(cfg: &mut web::ServiceConfig) {
-    cfg.configure(health::register);
-    cfg.route("/", web::to(HttpResponse::Ok));
+    cfg.configure(health::register)
+        .configure(webhooks::register)
+        .configure(google::register)
+        .route("/", web::to(HttpResponse::Ok));
 }
 
 #[cfg(test)]

@@ -1,5 +1,4 @@
-use actix_web::http::StatusCode;
-use actix_web::{Responder, web};
+use actix_web::web;
 
 pub async fn health() -> &'static str {
     return "HELLO";
