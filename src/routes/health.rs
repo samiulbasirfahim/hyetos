@@ -1,3 +1,10 @@
+use actix_web::http::StatusCode;
+use actix_web::{Responder, web};
+
 pub async fn health() -> &'static str {
-    "Check Health"
+    return "HELLO";
+}
+
+pub fn register(cfg: &mut actix_web::web::ServiceConfig) {
+    cfg.service(web::scope("/health").route("", web::get().to(health)));
 }

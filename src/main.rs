@@ -1,6 +1,6 @@
 use hyetos::server;
 
-#[tokio::main]
+#[actix_web::main]
 async fn main() {
     hyetos::Config::load();
 

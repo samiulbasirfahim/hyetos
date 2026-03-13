@@ -1,28 +1,26 @@
 use crate::db::DBPool;
 use crate::routes;
-use axum::{Router, routing::get};
-use tokio;
+use actix_web::{App, HttpServer, web};
+
+pub struct AppState {
+    pub db: DBPool,
+}
 
 pub async fn start(db_pool: DBPool) {
     let config = crate::Config::get();
-    let app: Router = build_server().with_state(db_pool);
 
-    let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", config.port))
-        .await
-        .unwrap_or_else(|err| match err.kind() {
-            std::io::ErrorKind::AddrInUse => {
-                panic!("PORT {} is using by other process", config.port)
-            }
-            _ => panic!("Failed to bind at port {}", config.port),
-        });
+    let app_state = web::Data::new(AppState {
+        db: db_pool.clone(),
+    });
 
-    println!("Succesfully bind the server at PORT: {}", config.port);
-
-    axum::serve(listener, app).await.unwrap();
-}
-
-fn build_server() -> Router<DBPool> {
-    Router::new()
-        .route("/", get(routes::check_running))
-        .route("/health", get(routes::health))
+    HttpServer::new(move || {
+        App::new()
+            .app_data(app_state.clone())
+            .configure(routes::register)
+    })
+    .bind(format!("0.0.0.0:{}", config.port))
+    .unwrap_or_else(|_| panic!("PORT {} is in use", config.port))
+    .run()
+    .await
+    .unwrap_or_else(|_| panic!("Failed to run server"));
 }
