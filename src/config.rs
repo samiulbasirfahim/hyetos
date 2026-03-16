@@ -4,6 +4,7 @@ use std::sync::OnceLock;
 pub struct Config {
     pub database_url: String,
     pub port: u16,
+    pub telegram_token: String,
     pub google_web_client_id: String,
     pub google_web_client_secret: String,
     pub google_redirect_uri: String,
@@ -16,7 +17,12 @@ impl Config {
         dotenv().ok();
 
         CONFIG.get_or_init(|| Config {
-            database_url: Self::env("DATABASE_URL"),
+            database_url: Self::env("DATABASE_URL")
+                .parse()
+                .expect("DATABASE_URL is missing"),
+            telegram_token: Self::env("TELEGRAM_TOKEN")
+                .parse()
+                .expect("telegram_token is missing"),
             port: Self::env("PORT")
                 .parse()
                 .expect("PORT must be a valid number"),

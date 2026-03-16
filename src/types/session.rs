@@ -8,7 +8,7 @@ pub enum ExternalSessionAction {
 
 pub struct ExternalSession {
     action: ExternalSessionAction,
-    uri: String,
+    state: String,
     platform: Platform,
     exipres_at: DateTime<Utc>,
 }
