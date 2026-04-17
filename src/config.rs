@@ -8,6 +8,7 @@ pub struct Config {
     pub google_web_client_id: String,
     pub google_web_client_secret: String,
     pub google_redirect_uri: String,
+    pub public_url: String,
 }
 
 static CONFIG: OnceLock<Config> = OnceLock::new();
@@ -35,6 +36,10 @@ impl Config {
             google_redirect_uri: Self::env("GOOGLE_REDIRECT_URI")
                 .parse()
                 .expect("GOOGLE_REDIRECT_URI is missing"),
+
+            public_url: Self::env("PUBLIC_URL")
+                .parse()
+                .expect("PUBLIC_URL is missing"),
         });
     }
 

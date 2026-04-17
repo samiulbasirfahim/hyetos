@@ -1,4 +1,3 @@
-
 use crate::types::message::IncomingMessage;
 use crate::types::platform::{Platform, PlatformHandler};
 use crate::types::telegram::TelegramUpdate;
@@ -6,20 +5,25 @@ use crate::types::telegram::TelegramUpdate;
 pub struct Telegram;
 
 impl PlatformHandler for Telegram {
-    fn parse(&self, body: &[u8]) -> Option<IncomingMessage> {
+    fn parse(&self, body: &[u8]) -> Option<(IncomingMessage, Platform)> {
         let update: TelegramUpdate = serde_json::from_slice(body).ok()?;
         let message = update.message?;
         let text = message.text?;
         let telegram_user_id = message.from?.id;
         let database_user_id = None;
 
-        Some(IncomingMessage {
-            platform: Platform::Telegram {
+        Some((
+            IncomingMessage {
+                platform: Platform::Telegram {
+                    user_id: telegram_user_id,
+                },
+                content: text,
+                user_id: database_user_id,
+            },
+            Platform::Telegram {
                 user_id: telegram_user_id,
             },
-            content: text,
-            user_id: database_user_id,
-        })
+        ))
     }
 
     async fn send(&self, msg: crate::types::message::OutgoingMessage) {

@@ -12,3 +12,5 @@ serde = "1.0.228"
 chrono = "0.4.44"
 oauth2  = "4"
 reqwest = { version = "0.12", features = ["json"] }
+dashmap = "6.1.0"
+rand = "0.8.5"

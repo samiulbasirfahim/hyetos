@@ -1,6 +1,6 @@
 use super::message::{IncomingMessage, OutgoingMessage};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Platform {
     Telegram { user_id: u64 },
     Discord { user_id: String },
@@ -8,6 +8,6 @@ pub enum Platform {
 
 #[allow(async_fn_in_trait)]
 pub trait PlatformHandler {
-    fn parse(&self, body: &[u8]) -> Option<IncomingMessage>;
+    fn parse(&self, body: &[u8]) -> Option<(IncomingMessage, Platform)>;
     async fn send(&self, msg: OutgoingMessage);
 }

@@ -4,6 +4,7 @@ use crate::utils;
 #[derive(Debug)]
 pub enum Intent {
     Echo { text: String },
+    Connect,
     Unknown,
 }
 
@@ -21,6 +22,7 @@ pub async fn detect(msg: &IncomingMessage) -> Intent {
         "/echo" => Intent::Echo {
             text: String::from(command.1),
         },
+        "/connect" => Intent::Connect,
         _ => Intent::Unknown,
     }
 }
