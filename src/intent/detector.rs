@@ -1,15 +1,16 @@
-use crate::types::message::IncomingMessage;
+use crate::types::message::Message;
 use crate::utils;
 
 #[derive(Debug)]
 pub enum Intent {
     Echo { text: String },
+    Start,
     Connect,
     Unknown,
 }
 
-pub async fn detect(msg: &IncomingMessage) -> Intent {
-    let text = msg.content.trim();
+pub async fn detect(msg: &Message) -> Intent {
+    let text = msg.get_content();
 
     let is_command = text.starts_with('/');
     if !is_command {
@@ -23,6 +24,7 @@ pub async fn detect(msg: &IncomingMessage) -> Intent {
             text: String::from(command.1),
         },
         "/connect" => Intent::Connect,
+        "/start" => Intent::Start,
         _ => Intent::Unknown,
     }
 }

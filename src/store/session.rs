@@ -22,6 +22,7 @@ pub fn get(key: &str) -> Option<impl std::ops::Deref<Target = ExternalSession>> 
         Ok(store) => store,
         Err(_) => return None,
     };
+    println!("[SESSION] Retrieving session for key: {}", key);
     let session = store.get(key)?;
     Some(session)
 }

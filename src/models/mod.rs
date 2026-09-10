@@ -1,1 +1,2 @@
-pub mod telegram;
+mod auth;
+pub use auth::Auth;

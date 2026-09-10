@@ -29,7 +29,7 @@ pub async fn google_login(query: web::Query<GoogleLoginQuery>) -> impl Responder
         }
         None => {
             println!("[GOOGLE] Invalid state: {}", state_from_query);
-            return HttpResponse::BadRequest().body("Invalid state");
+            return HttpResponse::BadRequest().body(format!("Invalid state: {}", state_from_query));
         }
     }
     let (auth_url, csrf_token) = client
@@ -44,6 +44,8 @@ pub async fn google_login(query: web::Query<GoogleLoginQuery>) -> impl Responder
         .add_scope(Scope::new(
             "https://www.googleapis.com/auth/calendar".to_string(),
         ))
+        .add_extra_param("access_type", "offline")
+        .add_extra_param("prompt", "consent")
         .url();
 
     let cookie = Cookie::build("oauth_state", csrf_token.secret().clone())

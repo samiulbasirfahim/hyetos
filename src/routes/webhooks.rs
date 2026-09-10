@@ -3,22 +3,20 @@ use actix_web::{HttpResponse, Responder, web};
 use crate::db::DBPool;
 use crate::intent::handle::handle;
 use crate::platform::telegram::Telegram;
-use crate::server::AppState;
 use crate::types::platform::PlatformHandler;
 
-async fn handle_webhook(platform_handler: impl PlatformHandler, pool: DBPool, body: &[u8]) {
-    let Some((incoming, platform)) = platform_handler.parse(body) else {
+async fn handle_webhook(platform: impl PlatformHandler, pool: DBPool, body: &[u8]) {
+    let Some(parsed_message) = platform.parse(body) else {
         println!("Couldn't parse");
         return;
     };
-
-    let outgoing = handle(incoming, platform, pool).await;
-    platform_handler.send(outgoing).await;
+    let handled_msg = handle(parsed_message, pool).await;
+    handled_msg.send().await;
 }
 
-async fn telegram_webhook(data: web::Data<AppState>, body: web::Bytes) -> impl Responder {
+async fn telegram_webhook(db: web::Data<DBPool>, body: web::Bytes) -> impl Responder {
     println!("Received Telegram webhook: {:?}", body);
-    handle_webhook(Telegram, data.db.clone(), &body).await;
+    handle_webhook(Telegram, db.get_ref().clone(), &body).await;
     HttpResponse::Ok().finish()
 }
 

@@ -1,10 +1,9 @@
 use super::platform::Platform;
-use chrono::{DateTime, Duration, Utc};
+use chrono::{DateTime, Utc};
 
 #[derive(Clone, Debug)]
 pub enum ExternalSessionAction {
     Connect,
-    Register,
 }
 
 #[derive(Clone, Debug)]
