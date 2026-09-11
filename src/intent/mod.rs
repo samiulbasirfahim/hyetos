@@ -1,7 +1,5 @@
+pub mod connect;
 pub mod detector;
-pub mod genai;
 pub mod handle;
 pub mod register;
-pub mod connect;
 pub mod start;
-pub mod unknown;
