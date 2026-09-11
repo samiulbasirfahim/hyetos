@@ -1,16 +1,19 @@
+use super::detector::{Intent, detect};
 use crate::db::DBPool;
 use crate::types::message::Message;
+use reqwest::Client;
 
-use super::detector::{Intent, detect};
-
-pub async fn handle(msg: Message, pool: DBPool) -> Message {
-    let intent = detect(&msg).await;
+pub async fn handle(msg: Message, pool: DBPool, client: &Client) -> Message {
+    let intent = detect(&msg, client).await;
 
     let reply: String = match intent {
-        Intent::Echo { text } => text.to_string(),
+        Intent::Echo { text } => text,
         Intent::Connect => super::connect::connect(msg.get_platform(), &pool).await,
-        Intent::Start => super::start::start(&pool, msg.get_platform()).await,
-        Intent::Unknown => "Unknown command. Try /help".to_string(),
+        Intent::Start => super::start::start(&pool, client, msg.get_platform()).await,
+
+        Intent::Chat { text } => crate::services::ask_gemini(client, &text)
+            .await
+            .unwrap_or_else(|_| "I'm having trouble thinking right now.".to_string()),
     };
 
     Message::new(msg.get_platform().clone(), reply)

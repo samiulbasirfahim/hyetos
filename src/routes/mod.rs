@@ -1,5 +1,5 @@
-mod health;
 mod google;
+mod health;
 mod webhooks;
 use actix_web::{HttpResponse, web};
 

@@ -9,6 +9,7 @@ pub struct Config {
     pub google_web_client_secret: String,
     pub google_redirect_uri: String,
     pub public_url: String,
+    pub gemini_api_key: String,
 }
 
 static CONFIG: OnceLock<Config> = OnceLock::new();
@@ -40,6 +41,8 @@ impl Config {
             public_url: Self::env("PUBLIC_URL")
                 .parse()
                 .expect("PUBLIC_URL is missing"),
+
+            gemini_api_key: Self::env("GEMINI_API_KEY"),
         });
     }
 

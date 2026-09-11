@@ -10,8 +10,8 @@ impl Message {
     pub fn new(platform: Platform, content: String) -> Self {
         Self { platform, content }
     }
-    pub async fn send(&self) {
-        self.platform.send_message(self.get_content()).await;
+    pub async fn send(&self, client: &reqwest::Client) {
+        self.platform.send_message(&client, self.get_content()).await;
     }
     pub fn get_content(&self) -> &str {
         &self.content.trim()

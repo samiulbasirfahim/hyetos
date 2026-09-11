@@ -1,15 +1,18 @@
+use reqwest::Client;
 use serde::{Deserialize, Serialize};
 
 use super::message::Message;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Platform {
-    Telegram { user_id: u64 },
+    Telegram { user_id: i64 },
 }
 
 #[allow(async_fn_in_trait)]
 pub trait PlatformHandler {
     fn parse(&self, body: &[u8]) -> Option<Message>;
+    async fn send(&self, client: &Client, user_id: &i64, msg: &str);
+    async fn send_typing_indicator(&self, client: &Client, user_id: &i64);
 }
 
 impl PartialEq for Platform {
@@ -28,11 +31,20 @@ impl Platform {
             Platform::Telegram { .. } => crate::platform::telegram::Telegram.parse(body),
         }
     }
-    pub async fn send_message(&self, message: &str) {
+    pub async fn send_message(&self, client: &Client, message: &str) {
         match self {
             Platform::Telegram { user_id } => {
                 crate::platform::telegram::Telegram
-                    .send(user_id, message)
+                    .send(client, user_id, message)
+                    .await;
+            }
+        }
+    }
+    pub async fn send_typing_indicator(&self, client: &Client) {
+        match self {
+            Platform::Telegram { user_id } => {
+                crate::platform::telegram::Telegram
+                    .send_typing_indicator(client, user_id)
                     .await;
             }
         }

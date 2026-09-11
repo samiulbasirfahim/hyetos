@@ -17,6 +17,7 @@ pub async fn callback(
     req: HttpRequest,
     query: web::Query<CallbackQuery>,
     db: web::Data<PgPool>,
+    client_reqwest: web::Data<reqwest::Client>,
 ) -> impl Responder {
     let client = build_oauth_client();
 
@@ -133,10 +134,13 @@ pub async fn callback(
 
             session
                 .platform
-                .send_message(&format!(
-                    "Successfully linked your Google account: {} ({})",
-                    name, email
-                ))
+                .send_message(
+                    client_reqwest.get_ref(),
+                    &format!(
+                        "Successfully linked your Google account: {} ({})",
+                        name, email
+                    ),
+                )
                 .await;
 
             HttpResponse::Ok().json(serde_json::json!({
