@@ -10,22 +10,31 @@ pub async fn start(pool: &DBPool, client: &Client, platform: &Platform) -> Strin
 
     let prompt = match user_result {
         Ok(user) => format!(
-            "Generate a concise, friendly welcome back message for a user returning to the Hyetos Bot. \
+            "
+            You're a helpful assistant, you mainly manages Events, using google calendar.
+            Generate a concise, friendly welcome back message for a user returning to the Hyetos Bot. \
             You may subtly reference their email: {}. \
-            CRITICAL INSTRUCTION: Return strictly plain text. Do NOT use markdown, bolding, asterisks, or any special formatting.",
+            CRITICAL INSTRUCTION: Return strictly plain text. Do NOT use markdown, bolding, asterisks, or any special formatting.
+            ",
             user.mail_address
         ),
 
         Err(sqlx::Error::RowNotFound) => String::from(
-            "Generate a concise, warm welcome message for a brand new user who has just connected to the Hyetos Bot for the first time. \
-            CRITICAL INSTRUCTION: Return strictly plain text. Do NOT use markdown, bolding, asterisks, or any special formatting.",
+            "
+            You're a helpful assistant, you mainly manages Events, using google calendar.
+            Generate a concise, warm welcome message for a brand new user who has just connected to the Hyetos Bot for the first time. \
+            CRITICAL INSTRUCTION: Return strictly plain text. Do NOT use markdown, bolding, asterisks, or any special formatting.
+            ",
         ),
 
         Err(e) => {
             println!("[DB ERROR] Failed to fetch user for welcome intent: {}", e);
             String::from(
-                "Generate a generic, friendly greeting message for the Hyetos Bot. \
-                CRITICAL INSTRUCTION: Return strictly plain text. Do NOT use markdown, bolding, asterisks, or any special formatting.",
+                "
+                You're a helpful assistant, you mainly manages Events, using google calendar.
+                Generate a generic, friendly greeting message for the Hyetos Bot. \
+                CRITICAL INSTRUCTION: Return strictly plain text. Do NOT use markdown, bolding, asterisks, or any special formatting.
+                ",
             )
         }
     };

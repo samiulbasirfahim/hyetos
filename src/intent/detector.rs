@@ -7,6 +7,8 @@ pub enum Intent {
     Echo { text: String },
     Start,
     Connect,
+    CreateEvent { date: String, title: String },
+    RetrieveEvents { date: String, date2: Option<String> },
     Chat { text: String },
 }
 
@@ -23,6 +25,18 @@ pub async fn detect(msg: &Message, client: &Client) -> Intent {
                 text: payload.to_string(),
             },
             "/connect" => Intent::Connect,
+            "/create-event" => {
+                let args: Vec<&str> = payload.splitn(2, ' ').collect();
+                if args.len() < 2 {
+                    return Intent::Chat {
+                        text: "Usage: /create_event <date> <title>".to_string(),
+                    };
+                }
+                Intent::CreateEvent {
+                    date: args[0].to_string(),
+                    title: args[1].to_string(),
+                }
+            }
             "/start" => Intent::Start,
             _ => Intent::Chat {
                 text: text.to_string(),

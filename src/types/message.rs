@@ -1,6 +1,6 @@
 use super::platform::Platform;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Message {
     platform: Platform,
     content: String,
@@ -11,7 +11,9 @@ impl Message {
         Self { platform, content }
     }
     pub async fn send(&self, client: &reqwest::Client) {
-        self.platform.send_message(&client, self.get_content()).await;
+        self.platform
+            .send_message(&client, self.get_content())
+            .await;
     }
     pub fn get_content(&self) -> &str {
         &self.content.trim()
