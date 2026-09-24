@@ -6,7 +6,7 @@ use crate::services::ask_gemini;
 use crate::types::platform::Platform;
 
 pub async fn start(pool: &DBPool, client: &Client, platform: &Platform) -> String {
-    let user_result = Auth::get_user_by_platform_user(pool, platform).await;
+    let user_result = Auth::get_user_by_platform_user(pool, &platform.get_user()).await;
 
     let prompt = match user_result {
         Ok(user) => format!(

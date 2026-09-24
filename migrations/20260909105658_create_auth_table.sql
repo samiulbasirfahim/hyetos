@@ -1,8 +1,10 @@
--- Add migration script here
 CREATE TABLE auths (
-    uuid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    mail_address VARCHAR(255) UNIQUE NOT NULL,
-    refresh_token TEXT NOT NULL,
-    scopes TEXT[] NOT NULL, 
-    platform_users JSONB NOT NULL DEFAULT '[]'::jsonb
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    users TEXT[] NOT NULL DEFAULT '{}', 
+    mail_address TEXT NOT NULL UNIQUE,
+    google_refresh_token TEXT NOT NULL,
+    scopes TEXT[] NOT NULL DEFAULT '{}',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+CREATE INDEX idx_auths_users ON auths USING GIN (users);

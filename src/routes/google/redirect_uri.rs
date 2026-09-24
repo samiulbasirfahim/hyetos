@@ -4,8 +4,10 @@ use oauth2::{AuthorizationCode, reqwest::async_http_client};
 use sqlx::PgPool;
 
 use crate::models::Auth;
+use crate::platform::Telegram;
 use crate::services::build_oauth_client;
 use crate::store::session;
+use crate::types::platform::PlatformHandler;
 
 #[derive(serde::Deserialize, Debug)]
 pub struct CallbackQuery {
@@ -82,15 +84,14 @@ pub async fn callback(
             let email = user_info["email"].as_str().unwrap_or("");
             let name = user_info["name"].as_str().unwrap_or("");
 
-            let platform_users_check =
-                Auth::get_platform_users_by_mail_address(db.get_ref(), email).await;
+            let platform_users_check = Auth::get_users_by_mail_address(db.get_ref(), email).await;
 
             match platform_users_check {
                 Err(sqlx::Error::RowNotFound) => {
                     let insert_result = Auth::insert(
                         db.get_ref(),
-                        vec![session.platform.clone()],
-                        refresh_token.clone(),
+                        &session.platform,
+                        refresh_token.as_str(),
                         email.to_string(),
                         granted_scopes.clone(),
                     )
@@ -108,7 +109,6 @@ pub async fn callback(
                     if !users.contains(&session.platform) {
                         users.push(session.platform.clone());
                     }
-                    println!("[DB] Updating existing user: {}", email);
 
                     let update_result = Auth::update_existing(
                         db.get_ref(),
@@ -132,9 +132,8 @@ pub async fn callback(
                 }
             }
 
-            session
-                .platform
-                .send_message(
+            if let Some(val) = Telegram::user_string_to_platform(session.platform.as_str()) {
+                val.send(
                     client_reqwest.get_ref(),
                     &format!(
                         "Successfully linked your Google account: {} ({})",
@@ -142,6 +141,7 @@ pub async fn callback(
                     ),
                 )
                 .await;
+            }
 
             HttpResponse::Ok().json(serde_json::json!({
                 "status":            "ok",

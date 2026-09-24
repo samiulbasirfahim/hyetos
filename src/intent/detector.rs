@@ -10,10 +10,14 @@ pub enum Intent {
     CreateEvent { date: String, title: String },
     RetrieveEvents { date: String, date2: Option<String> },
     Chat { text: String },
+    Ignore,
 }
 
 pub async fn detect(msg: &Message, client: &Client) -> Intent {
     let text = msg.get_content().trim();
+    // if msg.get_platform().is_group_chat() && !text.starts_with("/") {
+    //     return Intent::Ignore;
+    // }
 
     if text.starts_with('/') {
         let parts: Vec<&str> = text.splitn(2, ' ').collect();

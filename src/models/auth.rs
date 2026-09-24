@@ -1,88 +1,93 @@
-use sqlx::types::Json;
-use sqlx::types::uuid;
-
 use crate::db::DBPool;
-use crate::types::platform::Platform;
+use actix_web::error::ErrorGone;
+use chrono::{DateTime, Utc};
+use sqlx::types::uuid;
 
 #[derive(sqlx::FromRow, Debug)]
 pub struct Auth {
-    pub uuid: uuid::Uuid,
-    pub platform_users: Json<Vec<Platform>>,
-    pub refresh_token: String,
+    pub id: uuid::Uuid,
+    pub users: Vec<String>,
+    pub google_refresh_token: String,
     pub mail_address: String,
     pub scopes: Vec<String>,
+    pub created_at: DateTime<Utc>,
 }
 
 impl Auth {
     pub async fn insert(
         db: &DBPool,
-        platform_users: Vec<Platform>,
-        refresh_token: String,
+        initial_user: &String,
+        refresh_token: &str,
         mail_address: String,
         scopes: Vec<String>,
     ) -> Result<(), sqlx::Error> {
         sqlx::query!(
             r#"
-            INSERT INTO auths (platform_users, refresh_token, mail_address, scopes)
-            VALUES ($1, $2, $3, $4)
+            INSERT INTO auths (
+                users, google_refresh_token, mail_address, scopes
+            )
+            VALUES (ARRAY[$1], $2, $3, $4)
             "#,
-            Json(platform_users) as _,
+            initial_user,
             refresh_token,
             mail_address,
             &scopes
         )
         .execute(db)
         .await?;
+
         Ok(())
     }
 
     pub async fn get_user_by_platform_user(
         db: &DBPool,
-        platform_user: &Platform,
+        platform_user: &str,
     ) -> Result<Auth, sqlx::Error> {
-        let platform_user_json = serde_json::to_value([platform_user]).unwrap();
-
         let row = sqlx::query_as!(
             Auth,
             r#"
             SELECT 
-                uuid, 
-                platform_users as "platform_users: Json<Vec<Platform>>", 
-                refresh_token, 
-                mail_address, 
-                scopes
+                id, users, google_refresh_token, mail_address, scopes, created_at
             FROM auths
-            WHERE platform_users @> $1
+            WHERE $1 = ANY(users)
             "#,
-            platform_user_json
+            platform_user
         )
-        .fetch_one(db)
+        .fetch_optional(db)
         .await?;
 
-        Ok(row)
+        if let Some(auth) = row {
+            Ok(auth)
+        } else {
+            Err(sqlx::Error::RowNotFound)
+        }
     }
 
-    pub async fn get_platform_users_by_mail_address(
+    pub async fn get_users_by_mail_address(
         db: &DBPool,
         mail_address: &str,
-    ) -> Result<Vec<Platform>, sqlx::Error> {
+    ) -> Result<Vec<String>, sqlx::Error> {
         let row = sqlx::query!(
             r#"
-            SELECT platform_users as "platform_users: Json<Vec<Platform>>"
+            SELECT users
             FROM auths
             WHERE mail_address = $1
             "#,
             mail_address
         )
-        .fetch_one(db)
+        .fetch_optional(db)
         .await?;
 
-        Ok(row.platform_users.0)
+        let Some(record) = row else {
+            return Err(sqlx::Error::RowNotFound);
+        };
+
+        Ok(record.users)
     }
 
     pub async fn update_existing(
         db: &DBPool,
-        platform_users: Vec<Platform>,
+        users: Vec<String>,
         refresh_token: String,
         mail_address: String,
         scopes: Vec<String>,
@@ -90,16 +95,17 @@ impl Auth {
         sqlx::query!(
             r#"
             UPDATE auths
-            SET platform_users = $1, refresh_token = $2, scopes = $3
+            SET users = $1, google_refresh_token = $2, scopes = $3
             WHERE mail_address = $4
             "#,
-            Json(platform_users) as _,
+            &users,
             refresh_token,
             &scopes,
             mail_address
         )
         .execute(db)
         .await?;
+
         Ok(())
     }
 }

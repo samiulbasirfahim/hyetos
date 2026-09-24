@@ -44,6 +44,9 @@ pub async fn google_login(query: web::Query<GoogleLoginQuery>) -> impl Responder
         .add_scope(Scope::new(
             "https://www.googleapis.com/auth/calendar".to_string(),
         ))
+        .add_scope(Scope::new(
+            "https://www.googleapis.com/auth/gmail.modify".to_string(),
+        ))
         .add_extra_param("access_type", "offline")
         .add_extra_param("prompt", "consent")
         .url();

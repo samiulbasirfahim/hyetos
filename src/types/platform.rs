@@ -1,52 +1,76 @@
+use crate::platform::{Discord, Telegram};
+use crate::types::message::Message;
 use reqwest::Client;
-use serde::{Deserialize, Serialize};
-
-use super::message::Message;
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum Platform {
-    Telegram { user_id: i64 },
-}
 
 #[allow(async_fn_in_trait)]
 pub trait PlatformHandler {
-    fn parse(&self, body: &[u8]) -> Option<Message>;
-    async fn send(&self, client: &Client, user_id: &i64, msg: &str);
-    async fn send_typing_indicator(&self, client: &Client, user_id: &i64);
+    fn parse(body: &[u8]) -> Option<Message>;
+    fn user_string_to_platform(user_str: &str) -> Option<Platform>;
+
+    async fn send(&self, client: &Client, msg: &str);
+    async fn send_typing_indicator(&self, client: &Client);
+    fn get_session_key(&self) -> String;
+    fn get_user(&self) -> String;
+    fn is_group_chat(&self) -> bool;
 }
 
-impl PartialEq for Platform {
-    fn eq(&self, other: &Self) -> bool {
-        match (self, other) {
-            (Platform::Telegram { user_id: id1 }, Platform::Telegram { user_id: id2 }) => {
-                id1 == id2
-            }
+#[derive(Debug)]
+pub enum Platform {
+    Telegram(Telegram),
+    Discord(Discord),
+}
+
+macro_rules! delegate {
+    ($self:ident . $method:ident ( $( $arg:expr ),* ) ) => {
+        match $self {
+            Platform::Telegram(data) => data.$method( $( $arg ),* ),
+            Platform::Discord(data) => data.$method( $( $arg ),* ),
         }
-    }
+    };
+
+    ($self:ident . $method:ident ( $( $arg:expr ),* ) . await ) => {
+        match $self {
+            Platform::Telegram(data) => data.$method( $( $arg ),* ).await,
+            Platform::Discord(data) => data.$method( $( $arg ),* ).await,
+        }
+    };
 }
 
 impl Platform {
-    pub fn parse_message(&self, body: &[u8]) -> Option<Message> {
-        match self {
-            Platform::Telegram { .. } => crate::platform::telegram::Telegram.parse(body),
+    pub fn parse_webhook(platform_name: &str, body: &[u8]) -> Option<Message> {
+        match platform_name {
+            "telegram" => Telegram::parse(body),
+            "discord" => Discord::parse(body),
+            _ => None,
         }
     }
-    pub async fn send_message(&self, client: &Client, message: &str) {
-        match self {
-            Platform::Telegram { user_id } => {
-                crate::platform::telegram::Telegram
-                    .send(client, user_id, message)
-                    .await;
-            }
+
+    pub fn string_to_platform(user_str: &str) -> Option<Platform> {
+        let (platform_name, _) = user_str.split_once(':')?;
+        match platform_name {
+            "telegram" => Telegram::user_string_to_platform(user_str),
+            "discord" => Discord::user_string_to_platform(user_str),
+            _ => None,
         }
     }
+
+    pub async fn send(&self, client: &Client, msg: &str) {
+        delegate!(self.send(client, msg).await)
+    }
+
     pub async fn send_typing_indicator(&self, client: &Client) {
-        match self {
-            Platform::Telegram { user_id } => {
-                crate::platform::telegram::Telegram
-                    .send_typing_indicator(client, user_id)
-                    .await;
-            }
-        }
+        delegate!(self.send_typing_indicator(client).await)
+    }
+
+    pub fn get_session_key(&self) -> String {
+        delegate!(self.get_session_key())
+    }
+
+    pub fn get_user(&self) -> String {
+        delegate!(self.get_user())
+    }
+
+    pub fn is_group_chat(&self) -> bool {
+        delegate!(self.is_group_chat())
     }
 }

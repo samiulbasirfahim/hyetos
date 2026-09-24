@@ -7,7 +7,7 @@ use crate::{Config, store};
 use chrono::{Duration, Utc};
 
 pub async fn connect(platform: &Platform, pool: &DBPool) -> String {
-    let user = Auth::get_user_by_platform_user(pool, platform).await;
+    let user = Auth::get_user_by_platform_user(pool, &platform.get_user()).await;
     if let Ok(user) = user {
         return format!(
             "You are already connected as {}.\n\n\nIf you want to connect a different account, please disconnect first.",
@@ -15,7 +15,7 @@ pub async fn connect(platform: &Platform, pool: &DBPool) -> String {
         );
     }
 
-    println!("Creating session for platform: {:?}", platform);
+    println!("Creating session for platform: {:?}", platform.get_user());
     println!("DEBUG INFO: {:?}", user);
 
     let public_url = Config::get().public_url.clone();
@@ -23,7 +23,7 @@ pub async fn connect(platform: &Platform, pool: &DBPool) -> String {
     let state = random::generate_random_string(24);
 
     let session = ExternalSession {
-        platform: platform.clone(),
+        platform: platform.get_user(),
         action: ExternalSessionAction::Connect,
         exipres_at: Utc::now() + Duration::minutes(10),
     };

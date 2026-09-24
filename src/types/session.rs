@@ -1,14 +1,13 @@
-use super::platform::Platform;
 use chrono::{DateTime, Utc};
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub enum ExternalSessionAction {
     Connect,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct ExternalSession {
     pub action: ExternalSessionAction,
-    pub platform: Platform,
+    pub platform: String,
     pub exipres_at: DateTime<Utc>,
 }
