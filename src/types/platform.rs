@@ -14,7 +14,7 @@ pub trait PlatformHandler {
     fn is_group_chat(&self) -> bool;
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Platform {
     Telegram(Telegram),
     Discord(Discord),
@@ -45,11 +45,11 @@ impl Platform {
         }
     }
 
-    pub fn string_to_platform(user_str: &str) -> Option<Platform> {
+    pub fn user_string_to_platform(user_str: &str) -> Option<Platform> {
         let (platform_name, _) = user_str.split_once(':')?;
         match platform_name {
-            "telegram" => Telegram::user_string_to_platform(user_str),
-            "discord" => Discord::user_string_to_platform(user_str),
+            "telegram_user" => Telegram::user_string_to_platform(user_str),
+            "discord_user" => Discord::user_string_to_platform(user_str),
             _ => None,
         }
     }

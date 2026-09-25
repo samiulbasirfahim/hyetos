@@ -2,18 +2,34 @@ use reqwest::Client;
 use serde_json::{Value, json};
 use std::error::Error;
 
-pub async fn ask_gemini(client: &Client, prompt: &str) -> Result<String, Box<dyn Error>> {
+pub async fn ask_gemini(
+    client: &Client,
+    system_instruction: &str,
+    content: &str,
+) -> Result<String, Box<dyn Error>> {
     let config = crate::Config::get();
     let model_name = "gemini-2.5-flash";
     let url = format!(
-        "https://generativelanguage.googleapis.com/v1beta/models/{}:generateContent?key={}",
+        "https://generativelanguage.googleapis.com/v1beta/models/{}:generateContent",
         model_name,
-        config.gemini_api_key.trim()
     );
+
+    let body = json!({
+        "system_instruction" : {
+            "parts": [{"text": system_instruction}]
+        },
+        "contents": [
+            {
+                "role": "user",
+                "parts": [{"text": content}]
+            }
+        ]
+    });
 
     let res: Value = client
         .post(&url)
-        .json(&json!({"contents": [{"parts": [{"text": prompt}]}]}))
+        .header("x-goog-api-key", config.gemini_api_key.trim())
+        .json(&body)
         .send()
         .await?
         .error_for_status()?
@@ -24,9 +40,6 @@ pub async fn ask_gemini(client: &Client, prompt: &str) -> Result<String, Box<dyn
         .as_str()
         .unwrap_or_default()
         .to_string();
-
-    println!("[GEMINI] Prompt: {}", prompt);
-    println!("[GEMINI] Response: {}", text);
 
     Ok(text)
 }

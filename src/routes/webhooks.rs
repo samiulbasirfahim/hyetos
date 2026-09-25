@@ -37,7 +37,9 @@ async fn telegram_webhook(
     body: web::Bytes,
 ) -> impl Responder {
     println!("Received Telegram webhook: {:?}", body);
-    handle_webhook("telegram", client.get_ref(), db.get_ref().clone(), &body).await;
+    actix_web::rt::spawn(async move {
+        handle_webhook("telegram", client.get_ref(), db.get_ref().clone(), &body).await
+    });
     HttpResponse::Ok().finish()
 }
 

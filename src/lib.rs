@@ -3,6 +3,7 @@ pub mod db;
 pub mod intent;
 pub mod models;
 pub mod platform;
+pub mod prompt;
 pub mod routes;
 pub mod server;
 pub mod services;

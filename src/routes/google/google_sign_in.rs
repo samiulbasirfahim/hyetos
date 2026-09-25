@@ -52,6 +52,8 @@ pub async fn google_login(query: web::Query<GoogleLoginQuery>) -> impl Responder
         .url();
 
     let cookie = Cookie::build("oauth_state", csrf_token.secret().clone())
+        .same_site(actix_web::cookie::SameSite::Lax)
+        .secure(true)
         .path("/")
         .http_only(true)
         .finish();

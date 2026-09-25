@@ -15,9 +15,6 @@ pub async fn connect(platform: &Platform, pool: &DBPool) -> String {
         );
     }
 
-    println!("Creating session for platform: {:?}", platform.get_user());
-    println!("DEBUG INFO: {:?}", user);
-
     let public_url = Config::get().public_url.clone();
 
     let state = random::generate_random_string(24);
@@ -28,9 +25,14 @@ pub async fn connect(platform: &Platform, pool: &DBPool) -> String {
         exipres_at: Utc::now() + Duration::minutes(10),
     };
 
+    let platform_name = match platform {
+        Platform::Telegram(_) => "Telegram",
+        Platform::Discord(_) => "Discord",
+    };
+
     let url = format!(
-        "Use the following link to connect Hyetos with your Telegram account: {}{}?state={}",
-        public_url, "/auth/google", state
+        "Use the following link to connect Hyetos with your {} account: {}{}?state={}",
+        platform_name, public_url, "/auth/google", state
     );
 
     if let Err(_) = store::session::add(state, session) {

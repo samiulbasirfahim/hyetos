@@ -2,7 +2,7 @@ use crate::types::message::Message;
 use crate::types::platform::{Platform, PlatformHandler};
 use reqwest::Client;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Discord {
     pub user_id: String,
     pub channel_id: Option<String>,
@@ -14,7 +14,7 @@ impl PlatformHandler for Discord {
     }
 
     fn user_string_to_platform(user_str: &str) -> Option<Platform> {
-        let id_str = user_str.trim_start_matches("discord:");
+        let id_str = user_str.trim_start_matches("discord_user:");
         Some(Platform::Discord(Discord {
             user_id: id_str.to_string(),
             channel_id: None,
@@ -33,7 +33,7 @@ impl PlatformHandler for Discord {
     }
 
     fn get_user(&self) -> String {
-        format!("discord_user_{}", self.user_id)
+        format!("discord_user:{}", self.user_id)
     }
 
     fn is_group_chat(&self) -> bool {

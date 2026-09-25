@@ -5,8 +5,10 @@ async fn main() {
     hyetos::Config::load();
     hyetos::store::session::bootstrap();
 
-    let db_poll = hyetos::db::connect_db().await;
+    actix_web::rt::spawn(hyetos::workers::cleanup::session_cleanup());
+
+    let db_pool = hyetos::db::connect_db().await;
     println!("Successfully connected to the database");
 
-    server::start(db_poll).await
+    server::start(db_pool).await
 }

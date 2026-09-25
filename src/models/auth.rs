@@ -1,5 +1,4 @@
 use crate::db::DBPool;
-use actix_web::error::ErrorGone;
 use chrono::{DateTime, Utc};
 use sqlx::types::uuid;
 

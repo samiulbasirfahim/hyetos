@@ -1,3 +1,4 @@
 /target
 .gitignore
 .env
+audit_report.md

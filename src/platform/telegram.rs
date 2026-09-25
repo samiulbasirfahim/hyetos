@@ -3,7 +3,7 @@ use crate::types::platform::{Platform, PlatformHandler};
 use crate::types::telegram::TelegramUpdate;
 use reqwest::Client;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Telegram {
     pub user_id: i64,
     pub group_id: Option<i64>,

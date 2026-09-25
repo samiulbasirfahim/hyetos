@@ -4,10 +4,9 @@ use oauth2::{AuthorizationCode, reqwest::async_http_client};
 use sqlx::PgPool;
 
 use crate::models::Auth;
-use crate::platform::Telegram;
 use crate::services::build_oauth_client;
 use crate::store::session;
-use crate::types::platform::PlatformHandler;
+use crate::types::platform::Platform;
 
 #[derive(serde::Deserialize, Debug)]
 pub struct CallbackQuery {
@@ -132,7 +131,7 @@ pub async fn callback(
                 }
             }
 
-            if let Some(val) = Telegram::user_string_to_platform(session.platform.as_str()) {
+            if let Some(val) = Platform::user_string_to_platform(session.platform.as_str()) {
                 val.send(
                     client_reqwest.get_ref(),
                     &format!(

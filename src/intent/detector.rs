@@ -15,14 +15,13 @@ pub enum Intent {
 
 pub async fn detect(msg: &Message, client: &Client) -> Intent {
     let text = msg.get_content().trim();
-    // if msg.get_platform().is_group_chat() && !text.starts_with("/") {
-    //     return Intent::Ignore;
-    // }
 
     if text.starts_with('/') {
-        let parts: Vec<&str> = text.splitn(2, ' ').collect();
-        let command = parts[0];
-        let payload = if parts.len() > 1 { parts[1] } else { "" };
+        let (command_raw, payload) = text.split_once(' ').unwrap_or((text, ""));
+        let command = command_raw
+            .split_once('@')
+            .map(|(c, _)| c)
+            .unwrap_or(command_raw);
 
         return match command.to_lowercase().as_str() {
             "/echo" => Intent::Echo {
@@ -30,42 +29,35 @@ pub async fn detect(msg: &Message, client: &Client) -> Intent {
             },
             "/connect" => Intent::Connect,
             "/create-event" => {
-                let args: Vec<&str> = payload.splitn(2, ' ').collect();
-                if args.len() < 2 {
+                let (date, title) = payload.split_once(' ').unwrap_or(("", ""));
+                if date.is_empty() || title.is_empty() {
                     return Intent::Chat {
-                        text: "Usage: /create_event <date> <title>".to_string(),
+                        text: "Usage: /create-event <date> <title>".to_string(),
                     };
                 }
                 Intent::CreateEvent {
-                    date: args[0].to_string(),
-                    title: args[1].to_string(),
+                    date: date.to_string(),
+                    title: title.to_string(),
                 }
             }
             "/start" => Intent::Start,
             _ => Intent::Chat {
-                text: text.to_string(),
+                text: format!("Unknown command: {command}. Send /start for a list of commands."),
             },
         };
     }
 
-    let prompt = format!(
-        "You are a strict intent classifier for a bot. \
-        Classify the following user message into exactly ONE of these categories:\n\
-        - CONNECT (if the user wants to log in, link an account, or authenticate)\n\
-        - START (if the user is saying hello or asking for an intro/onboarding)\n\
-        - CHAT (for anything else, general questions, or conversation)\n\n\
-        User Message: \"{}\"\n\n\
-        CRITICAL: Respond with EXACTLY one word from the list above. No punctuation.",
-        text
-    );
+    let system_instruction = crate::prompt::build_system_instruction();
 
-    let classification = ask_gemini(client, &prompt).await.unwrap_or_default();
+    let response = ask_gemini(client, &system_instruction, text)
+        .await
+        .unwrap_or_else(|_| "I'm having trouble thinking right now.".to_string());
 
-    match classification.trim().to_uppercase().as_str() {
+    match response.trim() {
         "CONNECT" => Intent::Connect,
         "START" => Intent::Start,
-        _ => Intent::Chat {
-            text: text.to_string(),
+        reply => Intent::Chat {
+            text: reply.to_string(),
         },
     }
 }
