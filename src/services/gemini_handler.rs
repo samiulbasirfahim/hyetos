@@ -8,11 +8,8 @@ pub async fn ask_gemini(
     content: &str,
 ) -> Result<String, Box<dyn Error>> {
     let config = crate::Config::get();
-    let model_name = "gemini-2.5-flash";
-    let url = format!(
-        "https://generativelanguage.googleapis.com/v1beta/models/{}:generateContent",
-        model_name,
-    );
+    let url =
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
 
     let body = json!({
         "system_instruction" : {
@@ -27,7 +24,7 @@ pub async fn ask_gemini(
     });
 
     let res: Value = client
-        .post(&url)
+        .post(url)
         .header("x-goog-api-key", config.gemini_api_key.trim())
         .json(&body)
         .send()

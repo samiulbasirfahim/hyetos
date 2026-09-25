@@ -3,7 +3,7 @@ use std::time::Duration;
 use crate::db::DBPool;
 use crate::intent::handle::handle;
 use crate::types::platform::{self};
-use actix_web::{HttpResponse, Responder, web};
+use actix_web::{HttpRequest, HttpResponse, Responder, web};
 
 async fn handle_webhook(platform_name: &str, client: &reqwest::Client, pool: DBPool, body: &[u8]) {
     let Some(parsed_message) = platform::Platform::parse_webhook(platform_name, body) else {
@@ -34,9 +34,21 @@ async fn handle_webhook(platform_name: &str, client: &reqwest::Client, pool: DBP
 async fn telegram_webhook(
     db: web::Data<DBPool>,
     client: web::Data<reqwest::Client>,
+    req: HttpRequest,
     body: web::Bytes,
 ) -> impl Responder {
     println!("Received Telegram webhook: {:?}", body);
+    let expected = crate::Config::get().telegram_webhook_secret.as_str();
+    let provided = req
+        .headers()
+        .get("X-Telegram-Bot-Api-Secret-Token")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("");
+
+    if provided != expected {
+        return HttpResponse::Unauthorized().finish();
+    }
+
     actix_web::rt::spawn(async move {
         handle_webhook("telegram", client.get_ref(), db.get_ref().clone(), &body).await
     });

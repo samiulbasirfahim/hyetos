@@ -14,7 +14,6 @@ pub struct Telegram {
 impl PlatformHandler for Telegram {
     fn parse(body: &[u8]) -> Option<Message> {
         let update: TelegramUpdate = serde_json::from_slice(body).ok()?;
-        println!("[TELEGRAM] Received update: {:?}", update);
 
         let message = update.message?;
         let text = message.text?;

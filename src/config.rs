@@ -1,17 +1,11 @@
 use dotenvy::dotenv;
 use std::sync::OnceLock;
 
-const _DEFAULT_PROMPT: &str = "
-You are a helpful assistant. Answer the user's question as best as you can. If you don't know the answer, just say that you don't know, don't try to make up an answer.
-You mainly manage Events, using google calendar. List events, create events, give reminders, and answer questions about events. You are friendly and concise.
-Only answer what was asked. Do not provide additional information or context.
-CRITICAL INSTRUCTION: Return strictly plain text. Do NOT use markdown, bolding, a sterisks, or any special formatting.
-";
-
 pub struct Config {
     pub database_url: String,
     pub port: u16,
     pub telegram_token: String,
+    pub telegram_webhook_secret: String,
     pub google_web_client_id: String,
     pub google_web_client_secret: String,
     pub google_redirect_uri: String,
@@ -32,6 +26,9 @@ impl Config {
             telegram_token: Self::env("TELEGRAM_TOKEN")
                 .parse()
                 .expect("telegram_token is missing"),
+            telegram_webhook_secret: Self::env("TELEGRAM_WEBHOOK_SECRET")
+                .parse()
+                .expect("TELEGRAM_WEBHOOK_SECRET is missing"),
             port: Self::env("PORT")
                 .parse()
                 .expect("PORT must be a valid number"),

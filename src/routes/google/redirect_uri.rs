@@ -66,7 +66,7 @@ pub async fn callback(
                 }
             };
 
-            let user_info = match reqwest::Client::new()
+            let user_info = match client_reqwest.get_ref()
                 .get("https://www.googleapis.com/oauth2/v2/userinfo")
                 .bearer_auth(&access_token)
                 .send()
