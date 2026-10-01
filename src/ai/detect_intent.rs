@@ -1,10 +1,21 @@
-pub const CAPABILITIES: &[&str] = &[
-    "/connect — Link your Google account to Gmail and Calendar.",
-    "/start — Get an introduction and available commands.",
-    "Gmail — Search, check, count, and inspect emails using natural language.",
-];
+use std::sync::OnceLock;
 
-pub fn build_system_instruction() -> String {
+use reqwest::Client;
+
+use crate::intent::detector::Intent;
+use crate::services::ask_gemini;
+
+static GEMINI_INSTRUCTION: OnceLock<String> = OnceLock::new();
+
+pub fn get_system_instruction() -> &'static str {
+    GEMINI_INSTRUCTION.get_or_init(|| {
+
+    const CAPABILITIES: &[&str] = &[
+        "/connect — Link your Google account to Gmail and Calendar.",
+        "/start — Get an introduction and available commands.",
+        "Gmail — Search, check, count, and inspect emails using natural language.",
+    ];
+
     let capabilities = CAPABILITIES
         .iter()
         .map(|c| format!("- {c}"))
@@ -148,4 +159,27 @@ Do not use "connect" when the user is only asking how to connect.
 - Do not claim that an email exists, was read, or was found before the application performs the search.
 "#
     )
+
+    })
+}
+
+pub async fn detect_intent(client: &Client, message: &str) -> Intent {
+    let system_instruction = get_system_instruction();
+
+    let response = ask_gemini(client, &system_instruction, message)
+        .await
+        .unwrap_or_default();
+
+    match serde_json::from_str::<Intent>(&response) {
+        Ok(intent) => intent,
+
+        Err(error) => {
+            eprintln!("Failed to parse Gemini intent: {error}");
+            eprintln!("Gemini response: {response}");
+
+            Intent::Chat {
+                text: "I'm having trouble understanding that right now.".to_string(),
+            }
+        }
+    }
 }

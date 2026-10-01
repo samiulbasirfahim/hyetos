@@ -2,8 +2,7 @@ use std::time::Duration;
 
 use crate::db::DBPool;
 use crate::intent::handle::handle;
-use crate::types::platform::{self};
-use actix_web::{HttpRequest, HttpResponse, Responder, web};
+use crate::types::platform::{self}; use actix_web::{HttpRequest, HttpResponse, Responder, web};
 
 async fn handle_webhook(platform_name: &str, client: &reqwest::Client, pool: DBPool, body: &[u8]) {
     let Some(parsed_message) = platform::Platform::parse_webhook(platform_name, body) else {

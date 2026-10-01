@@ -20,7 +20,10 @@ pub async fn ask_gemini(
                 "role": "user",
                 "parts": [{"text": content}]
             }
-        ]
+        ],
+        "generationConfig": {
+            "responseMimeType": "application/json"
+        }
     });
 
     let res: Value = client

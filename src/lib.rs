@@ -3,7 +3,6 @@ pub mod db;
 pub mod intent;
 pub mod models;
 pub mod platform;
-pub mod prompt;
 pub mod routes;
 pub mod server;
 pub mod services;
@@ -11,5 +10,6 @@ pub mod store;
 pub mod types;
 pub mod utils;
 pub mod workers;
+pub mod ai;
 
 pub use config::Config;

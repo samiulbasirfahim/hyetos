@@ -10,21 +10,14 @@ pub async fn handle(msg: Message, pool: DBPool, client: &Client) -> Option<Messa
         Intent::Echo { text } => text,
         Intent::Connect => super::connect::connect(msg.get_platform(), &pool).await,
         Intent::Start => super::start::start(&pool, msg.get_platform()).await,
-        Intent::CreateEvent { date, title } => {
-            format!("Creating event '{}' on {}...", title, date)
-        }
-        Intent::RetrieveEvents { date, date2 } => {
-            format!(
-                "Retrieving events from {} to {}...",
-                date,
-                date2.unwrap_or_else(|| date.clone())
-            )
-        }
         Intent::Ignore => {
             println!("Ignoring message: {:?}", msg);
             return None;
         }
         Intent::Chat { text } => text,
+        Intent::GmailSearch { search } => {
+            format!("Searching Gmail with criteria: {:?}", search)
+        }
     };
     let reply = msg.into_reply(reply);
     Some(reply)
