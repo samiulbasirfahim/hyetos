@@ -2,13 +2,17 @@ use std::time::Duration;
 
 use crate::db::DBPool;
 use crate::intent::handle::handle;
-use crate::types::platform::{self}; use actix_web::{HttpRequest, HttpResponse, Responder, web};
+use crate::store::ai_context_session::push_new_message;
+use crate::types::platform::{self};
+use actix_web::{HttpRequest, HttpResponse, Responder, web};
 
 async fn handle_webhook(platform_name: &str, client: &reqwest::Client, pool: DBPool, body: &[u8]) {
     let Some(parsed_message) = platform::Platform::parse_webhook(platform_name, body) else {
         println!("Couldn't parse");
         return;
     };
+
+    let user_input = parsed_message.get_content().to_string();
 
     let typing_client = client.clone();
     let typing_message = parsed_message.get_platform().clone();
@@ -26,6 +30,11 @@ async fn handle_webhook(platform_name: &str, client: &reqwest::Client, pool: DBP
     let handled_msg = handle(parsed_message, pool, client).await;
     typing_task.abort();
     if let Some(msg) = &handled_msg {
+        push_new_message(
+            &msg.get_platform().get_user(),
+            user_input,
+            msg.get_content().to_string(),
+        );
         msg.send(client).await;
     }
 }

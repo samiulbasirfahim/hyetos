@@ -5,6 +5,9 @@ use std::sync::OnceLock;
 type GmailContextPerUser = DashMap<String, GmailSession>;
 const MAX_PREVIOUS_SESSION_COUNT: usize = 5;
 
+// maximum number of session the hashmap gonna keep on ram before it offloads to psql. 
+const MAX_SESSION_COUNT: usize = 10;
+
 static GMAIL_CONTEXT: OnceLock<GmailContextPerUser> = OnceLock::new();
 
 fn create_context(user_id: &str, message_context: GmailContext, store: &GmailContextPerUser) {

@@ -1,18 +1,18 @@
 use crate::db::DBPool;
 use crate::models::Auth;
+use crate::types::intent_return::{AuthorizedInfo, ConnectIntentReturn, IntentReturn};
 use crate::types::platform::Platform;
 use crate::types::session::{ExternalSession, ExternalSessionAction};
 use crate::utils::random;
 use crate::{Config, store};
 use chrono::{Duration, Utc};
 
-pub async fn connect(platform: &Platform, pool: &DBPool) -> String {
+pub async fn connect(platform: &Platform, pool: &DBPool) -> IntentReturn {
     let user = Auth::get_user_by_platform_user(pool, &platform.get_user()).await;
     if let Ok(user) = user {
-        return format!(
-            "You are already connected as {}.\n\n\nIf you want to connect a different account, please disconnect first.",
-            user.mail_address
-        );
+        return IntentReturn::Connect(ConnectIntentReturn::AuthorizedEmail(AuthorizedInfo {
+            email: user.mail_address,
+        }));
     }
 
     let public_url = Config::get().public_url.clone();
@@ -30,14 +30,18 @@ pub async fn connect(platform: &Platform, pool: &DBPool) -> String {
         Platform::Discord(_) => "Discord",
     };
 
-    let url = format!(
-        "Use the following link to connect Hyetos with your {} account: {}{}?state={}",
-        platform_name, public_url, "/auth/google", state
-    );
+    let url = format!("{}{}?state={}", public_url, "/auth/google", state);
 
     if let Err(_) = store::session::add(state, session) {
-        return "Failed to create session. Please try again.".to_string();
+        return IntentReturn::IntentHandlerError(
+            "Failed to create session. Please try again.".to_string(),
+        );
     }
 
-    url
+    IntentReturn::Connect(ConnectIntentReturn::ConnectionUrl(
+        crate::types::intent_return::ConnectionUrl {
+            url,
+            connecting_to: platform_name.to_string(),
+        },
+    ))
 }

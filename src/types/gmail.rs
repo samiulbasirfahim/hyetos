@@ -1,7 +1,6 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GmailSession {
     pub current: GmailContext,
@@ -55,3 +54,23 @@ pub enum ReadState {
     Read,
     Unread,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GmailMessage {
+    pub id: String,
+    pub thread_id: String,
+    pub snippet: String,
+    pub subject: String,
+    pub from: String,
+    pub to: Vec<String>,
+    pub date: DateTime<Utc>,
+    pub unread: bool,
+    pub has_attachments: bool,
+    pub body: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GmailQueryResponse {
+    pub messages: Vec<GmailMessage>,
+}
+

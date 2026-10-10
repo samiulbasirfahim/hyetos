@@ -6,12 +6,13 @@ pub async fn ask_gemini(
     client: &Client,
     system_instruction: &str,
     content: &str,
+    json_mode: bool,
 ) -> Result<String, Box<dyn Error>> {
     let config = crate::Config::get();
     let url =
         "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
 
-    let body = json!({
+    let mut body = json!({
         "system_instruction" : {
             "parts": [{"text": system_instruction}]
         },
@@ -25,6 +26,12 @@ pub async fn ask_gemini(
             "responseMimeType": "application/json"
         }
     });
+
+    if json_mode {
+        body["generationConfig"] = json!({
+            "responseMimeType": "application/json"
+        });
+    }
 
     let res: Value = client
         .post(url)
