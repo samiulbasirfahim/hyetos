@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use crate::db::DBPool;
 use crate::intent::handle::handle;
-use crate::store::ai_context_session::push_new_message;
+use crate::store::chat_session::push_new_message;
 use crate::types::platform::{self};
 use actix_web::{HttpRequest, HttpResponse, Responder, web};
 
@@ -27,13 +27,14 @@ async fn handle_webhook(platform_name: &str, client: &reqwest::Client, pool: DBP
         .await;
     });
 
-    let handled_msg = handle(parsed_message, pool, client).await;
+    let handled_msg = handle(parsed_message, pool.clone(), client).await;
     typing_task.abort();
     if let Some(msg) = &handled_msg {
         push_new_message(
             &msg.get_platform().get_user(),
             user_input,
             msg.get_content().to_string(),
+            pool.clone(),
         );
         msg.send(client).await;
     }

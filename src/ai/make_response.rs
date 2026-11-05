@@ -1,5 +1,6 @@
+use crate::db::DBPool;
 use crate::services::ask_gemini;
-use crate::store::ai_context_session::get_user_session;
+use crate::store::chat_session::get_user_session;
 use crate::types::intent_return::IntentReturn;
 
 const SYSTEM_INSTRUCTION: &str = r#"
@@ -521,8 +522,13 @@ current request.
 Return ONLY the final user-facing response.
 "#;
 
-pub async fn make_response(client: &reqwest::Client, body: IntentReturn, user_id: &str) -> String {
-    let user_session = get_user_session(user_id);
+pub async fn make_response(
+    client: &reqwest::Client,
+    body: IntentReturn,
+    user_id: &str,
+    pool: DBPool,
+) -> String {
+    let user_session = get_user_session(user_id, pool);
 
     let payload = serde_json::json!({
         "current_input": body,

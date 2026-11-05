@@ -1,5 +1,8 @@
 use chrono::{DateTime, Utc};
+use dashmap::DashMap;
 use serde::{Deserialize, Serialize};
+
+pub type ContextStore = DashMap<String, UserSession>;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UserSession {

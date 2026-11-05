@@ -1,4 +1,5 @@
 use crate::ai::detect_intent::detect_intent;
+use crate::db::DBPool;
 use crate::types::gmail::GmailSearch;
 use crate::types::message::Message;
 use reqwest::Client;
@@ -22,7 +23,7 @@ pub enum Intent {
     Ignore,
 }
 
-pub async fn detect(msg: &Message, client: &Client) -> Intent {
+pub async fn detect(msg: &Message, client: &Client, pool: DBPool) -> Intent {
     let text = msg.get_content().trim();
     if text.starts_with('/') {
         let (command_raw, payload) = text.split_once(' ').unwrap_or((text, ""));
@@ -42,7 +43,7 @@ pub async fn detect(msg: &Message, client: &Client) -> Intent {
         };
     }
 
-    match detect_intent(client, text, &msg.get_platform().get_user()).await {
+    match detect_intent(client, text, &msg.get_platform().get_user(), pool).await {
         Ok(intent) => intent,
         Err(err) => {
             eprintln!("Error detecting intent: {err}");

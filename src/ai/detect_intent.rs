@@ -1,6 +1,7 @@
+use crate::db::DBPool;
 use crate::intent::detector::Intent;
 use crate::services::ask_gemini;
-use crate::store::ai_context_session::{
+use crate::store::chat_session::{
     add_new_memories, get_user_session, update_context, update_summary,
 };
 use crate::types::context::{MemoryCategory, UserContext, UserMemory};
@@ -622,8 +623,9 @@ pub async fn detect_intent(
     client: &Client,
     message: &str,
     user_id: &str,
+    db_pool: DBPool,
 ) -> Result<Intent, String> {
-    let user_session = get_user_session(user_id);
+    let user_session = get_user_session(user_id, db_pool.clone());
     println!("User session for {user_id}: {user_session:?}");
 
     let payload = serde_json::json!({
@@ -644,12 +646,12 @@ pub async fn detect_intent(
         format!("Failed to parse intent analysis: {e}")
     })?;
 
-    apply_analysis_updates(user_id, &analysis);
+    apply_analysis_updates(user_id, &analysis, db_pool);
 
     Ok(analysis.intent)
 }
 
-fn apply_analysis_updates(user_id: &str, analysis: &IntentAnalysis) {
+fn apply_analysis_updates(user_id: &str, analysis: &IntentAnalysis, pool: DBPool) {
     let patch = &analysis.preference_update;
 
     let has_preference_updates = patch.preferred_response_format.is_some()
@@ -658,7 +660,7 @@ fn apply_analysis_updates(user_id: &str, analysis: &IntentAnalysis) {
         || patch.preferred_response_length.is_some();
 
     if has_preference_updates {
-        let mut context: UserContext = get_user_session(user_id)
+        let mut context: UserContext = get_user_session(user_id, pool.clone())
             .map(|session| session.context)
             .unwrap_or_default();
 
@@ -678,11 +680,11 @@ fn apply_analysis_updates(user_id: &str, analysis: &IntentAnalysis) {
             context.preferred_response_length = value.clone();
         }
 
-        update_context(user_id, context);
+        update_context(user_id, context, pool.clone());
     }
 
     for draft in &analysis.new_memories {
-        let already_exists = get_user_session(user_id)
+        let already_exists = get_user_session(user_id, pool.clone())
             .map(|session| {
                 session
                     .memories
@@ -706,10 +708,11 @@ fn apply_analysis_updates(user_id: &str, analysis: &IntentAnalysis) {
                 updated_at: now,
                 expires_at: None,
             },
+            pool.clone(),
         );
     }
 
     if let Some(summary) = &analysis.summary_update {
-        update_summary(user_id, summary.clone());
+        update_summary(user_id, summary.clone(), pool);
     }
 }

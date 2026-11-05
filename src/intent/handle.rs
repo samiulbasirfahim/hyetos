@@ -6,7 +6,7 @@ use crate::types::message::Message;
 use reqwest::Client;
 
 pub async fn handle(msg: Message, pool: DBPool, client: &Client) -> Option<Message> {
-    let intent = detect(&msg, client).await;
+    let intent = detect(&msg, client, pool.clone()).await;
 
     let reply: IntentReturn = match intent {
         Intent::Echo { text } => {
@@ -19,14 +19,29 @@ pub async fn handle(msg: Message, pool: DBPool, client: &Client) -> Option<Messa
         }
         Intent::Chat { text } => IntentReturn::Chat(text),
         Intent::GmailSearch {
-            id_in_prev,
-            shallow,
-            search_query,
+            id_in_prev: _,
+            shallow: _,
+            search_query:
+                crate::types::gmail::GmailSearch {
+                    text,
+                    subject,
+                    from,
+                    to,
+                    read_state,
+                    starred,
+                    important,
+                    has_attachments,
+                    before,
+                    after,
+                    larger_than,
+                    smaller_than,
+                    label,
+                },
         } => {
             return Some(msg.into_reply(serde_json::to_string("GMAIL QUERY").unwrap()));
         }
     };
-    let reply = make_response(client, reply, &msg.get_platform().get_user()).await;
+    let reply = make_response(client, reply, &msg.get_platform().get_user(), pool.clone()).await;
     let reply = msg.into_reply(reply);
     Some(reply)
 }
